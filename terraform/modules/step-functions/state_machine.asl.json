@@ -31,7 +31,7 @@
       "ResultPath": "$.classify_result",
       "ResultSelector": {
         "document_type.$": "$.Payload.document_type",
-        "confidence.$": "$.Payload.classification_confidence"
+        "confidence.$": "$.Payload.confidence"
       },
       "Next": "Extract"
     },
@@ -45,7 +45,7 @@
       "ResultPath": "$.extract_result",
       "ResultSelector": {
         "extracted_fields.$": "$.Payload.extracted_fields",
-        "confidence.$": "$.Payload.extraction_confidence"
+        "confidence.$": "$.Payload.confidence"
       },
       "Next": "Aggregate"
     },
