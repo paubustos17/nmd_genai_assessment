@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 def aggregate_results(event: dict) -> dict:
     """Aggregate extraction results and write summary to S3.
 
-    The candidate must implement writing the pipeline results to S3 as a JSON
-    file in the results/ prefix.
+    Collects preprocessing, classification, and extraction results into a summary
+    JSON object and writes it to S3 at results/{document_id}.json.
 
     Args:
         event: Full pipeline state with preprocess, classify, and extract results.
@@ -37,14 +37,21 @@ def aggregate_results(event: dict) -> dict:
         "status": "completed",
     }
 
-    # TODO: Write the summary to S3 at results/{document_id}.json
-    # 1. Serialize summary as JSON
-    # 2. Put the object to s3://{s3_bucket}/results/{document_id}.json
-    # 3. Return the summary dict
-    #
-    # Hint: Use get_s3_client().put_object(...)
+    if not s3_bucket:
+        logger.error("No S3 bucket specified for document %s", document_id)
+        return summary
 
-    raise NotImplementedError(
-        "aggregate_results() is not implemented. "
-        "Write the summary JSON to S3 at results/{document_id}.json and return it."
-    )
+    try:
+        s3 = get_s3_client()
+        s3_key = f"results/{document_id}.json"
+        summary_json = json.dumps(summary, indent=2)
+
+        logger.info("Writing summary to s3://%s/%s", s3_bucket, s3_key)
+        s3.put_object(Bucket=s3_bucket, Key=s3_key, Body=summary_json, ContentType="application/json")
+        logger.info("Successfully wrote results for document %s", document_id)
+
+    except Exception as e:
+        logger.error("Failed to write results to S3 for document %s: %s", document_id, str(e))
+        raise
+
+    return summary
